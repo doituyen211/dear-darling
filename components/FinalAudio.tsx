@@ -16,11 +16,11 @@ export default function FinalAudio() {
 
       <audio
         controls
-        preload="none"
+        preload="metadata"
         className="w-full max-w-sm rounded-full"
         aria-label="A short recorded message"
       >
-        <source src="/audio/message.m4a" type="audio/mpeg" />
+        <source src="/audio/message.m4a" type="audio/mp4" />
         Your browser doesn&rsquo;t support the audio element. You can download
         the recording from /audio/message.m4a instead.
       </audio>
