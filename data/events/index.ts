@@ -17,6 +17,33 @@
 
 export type EventStatus = "ready" | "coming-soon" | "draft";
 
+/**
+ * Một thế giới màu cho một sự kiện.
+ *
+ * **Opt-in.** Sự kiện không khai báo `theme` thì giữ nguyên màu cũ và
+ * không được đặt vào wrapper theme — đó là trường hợp của `thu-dau`, sự
+ * kiện đầu tiên, để đường đọc thư của nó không đổi một dòng nào.
+ *
+ * Giá trị ở đây là màu thật, không phải class — wrapper ghi chúng vào các
+ * biến `--event-*` và các class `*-event-*` đọc từ đó.
+ */
+export interface EventTheme {
+  /** Nền trang. */
+  base: string;
+  /** Bề mặt phụ (panel, mảnh giấy). */
+  surface: string;
+  /** Chữ chính. */
+  ink: string;
+  /** Chữ phụ. */
+  muted: string;
+  /** Màu nhấn chính. */
+  accent: string;
+  /** Màu nhấn phụ — cánh hoa, chi tiết thứ cấp. */
+  accent2: string;
+  /** Họa tiết nền. `none` = không dùng. */
+  pattern: "petal" | "contour" | "dots" | "none";
+}
+
 export interface EventMeta {
   /** Slug ổn định, dùng làm URL: /e/<id>. Đổi id = đổi URL cũ. */
   id: string;
@@ -37,6 +64,11 @@ export interface EventMeta {
   cover?: string;
   /** Màu nhấn riêng của sự kiện, dùng qua biến CSS --event-accent. */
   accent?: string;
+  /**
+   * Thế giới màu riêng của sự kiện. Bỏ trống thì giữ nguyên màu cũ
+   * (dành cho sự kiện đầu tiên).
+   */
+  theme?: EventTheme;
   /** ready: có nội dung để đọc. coming-soon: còn đang chuẩn bị. */
   status: EventStatus;
   /** Sự kiện này có cần mã để mở không. */

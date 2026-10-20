@@ -13,6 +13,81 @@ body {
   overflow-x: hidden;
 }
 
+/* ───────────────────────────────────────────────────────────────────
+   Hệ nền tảng lấy cảm hứng Lovable — chỉ dùng cho các phần MỚI
+   (trang chủ và các sự kiện tương lai). Xem DESIGN.md.
+   ─────────────────────────────────────────────────────────────────── */
+:root {
+  --cream: #f7f4ed;
+  --charcoal: #1c1c1c;
+  --off-white: #fcfbf8;
+  --muted-gray: #5f5f5d;
+  --cream-line: #eceae4;
+  --line-strong: rgba(28, 28, 28, 0.4);
+  --ring-blue: rgba(59, 130, 246, 0.5);
+  --focus-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+
+  /* Theme theo sự kiện — opt-in. Sự kiện không khai báo `theme` thì
+     giữ nguyên màu cũ và không được đặt vào wrapper theme; đó là
+     trường hợp của `thu-dau`, để đường đọc thư của nó không đổi một
+     dòng nào. */
+  --event-base: #f7f4ed;
+  --event-surface: #fcfbf8;
+  --event-ink: #1c1c1c;
+  --event-muted: #5f5f5d;
+  --event-accent: #d6556e;
+  --event-accent-2: #e8a2b0;
+
+  /* Màu hoa — lẫn lộn như hoa ngoài đời, không dùng màu no bão hòa
+     cho toàn bộ giao diện. */
+  --flower-blue: #4a7fd4;
+  --flower-red: #d6556e;
+  --flower-purple: #8b6fd8;
+  --flower-yellow: #e0b23c;
+  --flower-pink: #e8a2b0;
+  --flower-center: #f4c542;
+}
+
+/* Focus mềm, đổ bóng thay vì viền cứng — kiểu Lovable. Dùng cho các
+   phần mới; sự kiện đầu tiên giữ viền vàng cũ. */
+.focus-warm:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-shadow);
+}
+
+/* Một bông hoa cúc 5 cánh: mọc ra từ từ từ giữa, xoay nhẹ rồi đứng yên.
+   `animation-delay` do từng bông tự đặt, nên cả màn hình được phủ dần. */
+.daisy {
+  opacity: 0;
+  transform: scale(0) rotate(-24deg);
+  animation-name: daisy-bloom;
+  animation-duration: 1.3s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+@keyframes daisy-bloom {
+  from {
+    opacity: 0;
+    transform: scale(0) rotate(-24deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Khi người dùng yêu cầu giảm chuyển động, cả màn hình hoa hiện ra
+   ngay, không mọc dần. */
+@media (prefers-reduced-motion: reduce) {
+  .daisy {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* Keep a visible, deliberate focus ring everywhere — this page has very
    few interactive elements, so the ones that exist must be unmistakable. */
 :focus-visible {

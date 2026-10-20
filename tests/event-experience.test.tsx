@@ -6,8 +6,8 @@ import EventExperience from "@/components/EventExperience";
 import { getEventById } from "@/data/events";
 import { EVENT_PIN_HASHES, sessionScopeFor } from "@/data/security";
 
+// Mã PIN thật. Cả hai sự kiện dùng chung mã này.
 const LEGACY_PIN = "230105";
-const EVENT_20_10_PIN = "201020";
 
 const typePin = async (pin: string) => {
   const user = userEvent.setup();
@@ -64,10 +64,10 @@ describe("EventExperience", () => {
     );
   });
 
-  it("mở khoá bằng mã riêng cho sự kiện 20/10", async () => {
+  it("mở khoá sự kiện 20/10 bằng chung mã", async () => {
     renderEvent("mua-20-10");
 
-    await typePin(EVENT_20_10_PIN);
+    await typePin(LEGACY_PIN);
 
     await waitFor(
       () => {

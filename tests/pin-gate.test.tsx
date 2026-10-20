@@ -3,12 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import PinGate from "@/components/PinGate";
-import { EVENT_PIN_HASHES, PIN_HASH } from "@/data/security";
+import { EVENT_PIN_HASHES, PIN_HASH, sessionScopeFor } from "@/data/security";
 
-// Mã PIN thật của sự kiện đầu tiên.
+// Mã PIN thật của sự kiện đầu tiên. Sự kiện 20/10 dùng chung mã này.
 const LEGACY_PIN = "230105";
-// Mã PIN riêng của sự kiện 20/10.
-const EVENT_20_10_PIN = "201020";
 
 const typePin = async (pin: string) => {
   const user = userEvent.setup();
@@ -107,22 +105,42 @@ describe("PinGate — hành vi cũ (không truyền prop)", () => {
   });
 });
 
-describe("PinGate — mã riêng theo sự kiện", () => {
+describe("PinGate — sự kiện dùng chung mã", () => {
+  const EVENT_ID = "mua-20-10";
+  const pinHash = EVENT_PIN_HASHES[EVENT_ID];
+
   beforeEach(() => {
     sessionStorage.clear();
   });
 
-  it("không mở khoá bằng mã của sự kiện khác", async () => {
+  it("sự kiện 20/10 mở khoá bằng chung mã với thư cũ", async () => {
     render(
       <PinGate
-        pinHash={EVENT_PIN_HASHES["mua-20-10"]}
-        sessionScope="mua-20-10"
+        pinHash={pinHash}
+        sessionScope={sessionScopeFor(EVENT_ID, pinHash)}
       >
         <p>nội dung 20/10</p>
       </PinGate>,
     );
 
     await typePin(LEGACY_PIN);
+
+    await waitFor(() => {
+      expect(screen.getByText("nội dung 20/10")).toBeInTheDocument();
+    });
+  });
+
+  it("mã sai vẫn bị từ chối", async () => {
+    render(
+      <PinGate
+        pinHash={pinHash}
+        sessionScope={sessionScopeFor(EVENT_ID, pinHash)}
+      >
+        <p>nội dung 20/10</p>
+      </PinGate>,
+    );
+
+    await typePin("999999");
 
     await waitFor(() => {
       expect(
@@ -132,39 +150,21 @@ describe("PinGate — mã riêng theo sự kiện", () => {
     expect(screen.queryByText("nội dung 20/10")).not.toBeInTheDocument();
   });
 
-  it("mở khoá bằng mã riêng của sự kiện", async () => {
+  it("dùng chung khoá session với thư cũ", async () => {
     render(
       <PinGate
-        pinHash={EVENT_PIN_HASHES["mua-20-10"]}
-        sessionScope="mua-20-10"
+        pinHash={pinHash}
+        sessionScope={sessionScopeFor(EVENT_ID, pinHash)}
       >
         <p>nội dung 20/10</p>
       </PinGate>,
     );
 
-    await typePin(EVENT_20_10_PIN);
+    await typePin(LEGACY_PIN);
 
     await waitFor(() => {
-      expect(screen.getByText("nội dung 20/10")).toBeInTheDocument();
+      expect(sessionStorage.getItem("letter-unlocked")).toBe("true");
     });
-  });
-
-  it("dùng khoá session riêng, không đụng khoá của sự kiện cũ", async () => {
-    render(
-      <PinGate
-        pinHash={EVENT_PIN_HASHES["mua-20-10"]}
-        sessionScope="mua-20-10"
-      >
-        <p>nội dung 20/10</p>
-      </PinGate>,
-    );
-
-    await typePin(EVENT_20_10_PIN);
-
-    await waitFor(() => {
-      expect(sessionStorage.getItem("letter-unlocked:mua-20-10")).toBe("true");
-    });
-    expect(sessionStorage.getItem("letter-unlocked")).toBeNull();
   });
 });
 
@@ -176,8 +176,12 @@ describe("PinGate — dữ liệu mã", () => {
     expect(EVENT_PIN_HASHES["thu-dau"]).toBe(PIN_HASH);
   });
 
+  it("sự kiện 20/10 dùng chung mã với thư cũ", () => {
+    expect(EVENT_PIN_HASHES["mua-20-10"]).toBe(PIN_HASH);
+  });
+
   it("không lưu mã PIN dạng rõ trong source", () => {
     expect(PIN_HASH).not.toContain(LEGACY_PIN);
-    expect(EVENT_PIN_HASHES["mua-20-10"]).not.toContain(EVENT_20_10_PIN);
+    expect(EVENT_PIN_HASHES["mua-20-10"]).not.toContain(LEGACY_PIN);
   });
 });

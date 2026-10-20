@@ -195,7 +195,7 @@ export default function EventCarousel({ events }: EventCarouselProps) {
       role="region"
       aria-roledescription="carousel"
       aria-label="Những dịp anh đã chuẩn bị cho em"
-      className="relative flex h-screen h-dvh w-full flex-col items-center justify-center overflow-hidden bg-ink-950"
+      className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-ink-950"
       onPointerEnter={() => setIsInteracting(true)}
       onPointerLeave={() => setIsInteracting(false)}
       onFocusCapture={() => setIsInteracting(true)}
