@@ -1,6 +1,10 @@
-Replace this folder's contents with your real recording, named:
+Replace this folder's contents with your real recording.
 
-    message.mp3
+The file the site plays right now is:
 
-That's the only change needed — FinalAudio.tsx already points to
-/audio/message.mp3.
+    message.m4a
+
+`components/FinalAudio.tsx` points at /audio/message.m4a with type "audio/mp4".
+If you use a different filename or format, update the <source src=... type=...>
+line there, or give the occasion its own file and set `audio` in
+`data/events/<id>.ts`.

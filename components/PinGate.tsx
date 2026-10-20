@@ -25,24 +25,48 @@ async function sha256Hex(text: string): Promise<string> {
     .join("");
 }
 
-export default function PinGate({ children }: { children: React.ReactNode }) {
+export default function PinGate({
+  children,
+  pinHash,
+  sessionScope,
+}: {
+  children: React.ReactNode;
+  /**
+   * Mã băm SHA-256 của mã PIN cho sự kiện này. Bỏ trống thì dùng
+   * `PIN_HASH` mặc định — tức là hành vi cũ, không đổi gì cả.
+   */
+  pinHash?: string;
+  /**
+   * Khoá lưu trạng thái "đã mở khoá" trong sessionStorage. Bỏ trống
+   * thì dùng `SESSION_KEY` cũ. Mỗi sự kiện nên có khoá riêng, nếu
+   * không mở khoá sự kiện này lại mở luôn sự kiện kia.
+   */
+  sessionScope?: string;
+}) {
   const [unlocked, setUnlocked] = useState(false);
   // null = đang kiểm tra sessionStorage; tránh nháy màn hình khóa lên
-  // rồi tắt ngay khi trang vừa tải nếu đã mở khóa từ trước.
+  // rồi tắt ngay khi trang vừa tải nếu đã mở khoá từ trước.
   const [checked, setChecked] = useState(false);
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const [error, setError] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const expectedHash = pinHash ?? PIN_HASH;
+  const sessionKey = sessionScope
+    ? `${SESSION_KEY}:${sessionScope}`
+    : SESSION_KEY;
+
   useEffect(() => {
-    // Nếu muốn KHÔNG nhớ trạng thái mở khóa (luôn hỏi lại mã mỗi lần
+    // Nếu muốn KHÔNG nhớ trạng thái mở khoá (luôn hỏi lại mã mỗi lần
     // vào trang), xoá khối if bên dưới và chỉ giữ setChecked(true).
-    // if (sessionStorage.getItem(SESSION_KEY) === "true") {
+    // Lưu ý: khoá session phải là `sessionKey` (riêng theo sự kiện),
+    // nếu không thì mở khoá một sự kiện sẽ mở khoá luôn sự kiện khác.
+    // if (sessionStorage.getItem(sessionKey) === "true") {
     //   setUnlocked(true);
     // }
     setChecked(true);
-  }, []);
+  }, [sessionKey]);
 
   useEffect(() => {
     if (!unlocked && checked) {
@@ -115,8 +139,8 @@ export default function PinGate({ children }: { children: React.ReactNode }) {
     const hash = await sha256Hex(code.join(""));
     setVerifying(false);
 
-    if (hash === PIN_HASH) {
-      sessionStorage.setItem(SESSION_KEY, "true");
+    if (hash === expectedHash) {
+      sessionStorage.setItem(sessionKey, "true");
       setUnlocked(true);
     } else {
       setError(true);

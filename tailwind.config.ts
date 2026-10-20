@@ -1,13 +1,20 @@
 import type { Config } from "tailwindcss";
+import { WIDE_QUERY } from "./lib/media";
 
 const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
     "./data/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
+      screens: {
+        // Dùng chung hằng số với `useMediaQuery` trong carousel, để phần
+        // CSS và phần JS luôn dùng cùng một ngưỡng.
+        wide: { raw: WIDE_QUERY },
+      },
       colors: {
         // Deep indigo-night background, read by lamplight rather than
         // the usual cream/terracotta or black/neon defaults.
