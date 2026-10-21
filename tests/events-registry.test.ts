@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { messages } from "@/data/messages";
+import { covers } from "@/components/event-covers";
 import {
   events,
   getEventById,
@@ -40,6 +41,18 @@ describe("event registry", () => {
   it("has a body loader for every published event", () => {
     publishedEvents.forEach((event) => {
       expect(hasEventBody(event.id)).toBe(true);
+    });
+  });
+
+  it("has its own cover for every published event", () => {
+    publishedEvents.forEach((event) => {
+      expect(covers[event.id]).toBeDefined();
+    });
+  });
+
+  it("declares how each event is read", () => {
+    events.forEach((event) => {
+      expect(["letter", "greeting"]).toContain(event.experience);
     });
   });
 

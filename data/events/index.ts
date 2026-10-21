@@ -71,6 +71,13 @@ export interface EventMeta {
   theme?: EventTheme;
   /** ready: có nội dung để đọc. coming-soon: còn đang chuẩn bị. */
   status: EventStatus;
+  /**
+   * Cách sự kiện được kể ở trang chi tiết.
+   *
+   * - `letter`   — đọc từng dòng thư rồi tới ghi âm (dành cho thu-dau).
+   * - `greeting` — một cảnh chúc, không có thư (dành cho mua-20-10).
+   */
+  experience: "letter" | "greeting";
   /** Sự kiện này có cần mã để mở không. */
   requiresPin: boolean;
   /** Số nhỏ hiển thị trước. */
@@ -95,8 +102,17 @@ export const events: EventMeta[] = [
     date: "2026-10-20",
     dateLabel: "20/10",
     preview: "Một ngày để ghi nhớ, và một món quà nhỏ chỉ dành riêng cho em.",
-    accent: "#d08c8c",
+    theme: {
+      base: "#f7f4ed",
+      surface: "#fcfbf8",
+      ink: "#1c1c1c",
+      muted: "#5f5f5d",
+      accent: "#d6556e",
+      accent2: "#e8a2b0",
+      pattern: "petal",
+    },
     status: "ready",
+    experience: "greeting",
     requiresPin: true,
     order: 0,
     published: true,
@@ -107,6 +123,7 @@ export const events: EventMeta[] = [
     title: "Thư gửi em",
     preview: "Một thư dài, và một giọng nói chỉ dành cho em.",
     status: "ready",
+    experience: "letter",
     requiresPin: true,
     order: 1,
     published: true,
@@ -117,6 +134,28 @@ export const events: EventMeta[] = [
 export const publishedEvents: EventMeta[] = events
   .filter((event) => event.published)
   .sort((a, b) => a.order - b.order);
+
+/**
+ * Thế giới màu của sự kiện đầu tiên — đúng bằng các màu hard-code đang
+ * dùng cho nó, nên đường đọc thư của nó không đổi một pixel nào.
+ *
+ * Sự kiện này không khai báo `theme` (xem `EventMeta.theme`); hằng số
+ * này là giá trị mặc định khi một sự kiện không có theme.
+ */
+export const LEGACY_THEME: EventTheme = {
+  base: "#0c0f1a",
+  surface: "#12172a",
+  ink: "#f4ead9",
+  muted: "#8b93ac",
+  accent: "#c9a876",
+  accent2: "#c9a876",
+  pattern: "none",
+};
+
+/** Theme có hiệu lực của một sự kiện: theme riêng, hoặc theme cũ. */
+export function themeFor(event: EventMeta): EventTheme {
+  return event.theme ?? LEGACY_THEME;
+}
 
 export function getEventById(id: string): EventMeta | undefined {
   return events.find((event) => event.id === id);

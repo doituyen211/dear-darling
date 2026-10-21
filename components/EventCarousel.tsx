@@ -3,17 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
 import type { PanInfo } from "framer-motion";
-import EventCard from "@/components/EventCard";
+import { coverFor } from "@/components/event-covers";
 import { useMediaQuery } from "@/components/hooks/useMediaQuery";
 import { usePrefersReducedMotion } from "@/components/hooks/usePrefersReducedMotion";
+import { LEGACY_THEME, themeFor } from "@/data/events";
+import type { EventMeta, EventTheme } from "@/data/events";
 import { WIDE_QUERY } from "@/lib/media";
-import type { EventMeta } from "@/data/events";
 
 /** Bao lâu thì chuyển sang sự kiện tiếp theo. */
 const AUTOPLAY_MS = 6500;
 /** Lần đầu chờ lâu hơn, cho người xem kịp định hướng. */
 const FIRST_DELAY_MS = 9000;
-const SLIDE_DURATION = 0.55;
+const SLIDE_DURATION = 0.6;
 const EASE = [0.22, 1, 0.36, 1] as const;
 const SWIPE_DISTANCE = 60;
 const SWIPE_VELOCITY = 500;
@@ -41,10 +42,12 @@ export default function EventCarousel({ events }: EventCarouselProps) {
   const draggedRef = useRef(false);
 
   const activeEvent = events[index];
+  // Mỗi sự kiện đều có một theme có hiệu lực: theme riêng, hoặc theme
+  // cũ (đúng bằng màu hard-code của sự kiện đầu tiên).
+  const theme: EventTheme = activeEvent ? themeFor(activeEvent) : LEGACY_THEME;
 
-  // Vị trí của track. Dùng phần trăm theo kích thước của chính track:
-  // track dài bằng `count` lần khung nhìn, nên lệch 100/count % = đúng
-  // một khung nhìn.
+  // Vị trí của track. Track dài bằng `count` lần màn hình, nên lệch
+  // 100/count % là đúng một màn hình.
   const offset = useMemo(() => {
     const percent = count > 0 ? (index * 100) / count : 0;
     return {
@@ -73,7 +76,7 @@ export default function EventCarousel({ events }: EventCarouselProps) {
     });
   }, [offset, isWide, reducedMotion, trackControls]);
 
-  // Tab bị ẩn thì dừng chuyển slide.
+  // Tab bị ẩn thì dừng chuyển sự kiện.
   useEffect(() => {
     const onVisibilityChange = () => setIsPageVisible(!document.hidden);
 
@@ -134,7 +137,6 @@ export default function EventCarousel({ events }: EventCarouselProps) {
 
   const togglePlay = useCallback(() => {
     if (isUserPaused) {
-      // Đang ở sự kiện cuối thì bắt đầu lại từ đầu.
       if (index >= count - 1) {
         setIndex(0);
         setAnnouncement(`Sự kiện 1 trên ${count}: ${events[0].occasion}`);
@@ -150,7 +152,10 @@ export default function EventCarousel({ events }: EventCarouselProps) {
       const distance = isWide ? info.offset.x : info.offset.y;
       const velocity = isWide ? info.velocity.x : info.velocity.y;
 
-      if (Math.abs(distance) > SWIPE_DISTANCE || Math.abs(velocity) > SWIPE_VELOCITY) {
+      if (
+        Math.abs(distance) > SWIPE_DISTANCE ||
+        Math.abs(velocity) > SWIPE_VELOCITY
+      ) {
         go(distance < 0 ? 1 : -1);
       }
 
@@ -181,9 +186,8 @@ export default function EventCarousel({ events }: EventCarouselProps) {
 
   if (count === 0) {
     return (
-      <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-ink-950">
-        <Backdrop />
-        <p className="relative z-10 px-6 text-center font-serif text-2xl font-light italic text-candle-light">
+      <main className="relative flex h-screen w-full items-center justify-center overflow-hidden bg-event-base">
+        <p className="px-6 text-center font-serif text-2xl font-light italic text-event-ink">
           Chưa có sự kiện nào để hiện.
         </p>
       </main>
@@ -195,91 +199,63 @@ export default function EventCarousel({ events }: EventCarouselProps) {
       role="region"
       aria-roledescription="carousel"
       aria-label="Những dịp anh đã chuẩn bị cho em"
-      className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-ink-950"
+      className="relative h-screen w-full overflow-hidden bg-event-base"
+      style={themeVars(theme)}
       onPointerEnter={() => setIsInteracting(true)}
       onPointerLeave={() => setIsInteracting(false)}
       onFocusCapture={() => setIsInteracting(true)}
       onBlurCapture={handleBlurCapture}
     >
-      <Backdrop />
-
       <p aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </p>
 
-      <div className="relative z-10 flex h-full w-full max-w-5xl flex-col items-center justify-center gap-[clamp(0.75rem,2vh,1.75rem)] px-4 py-[clamp(1rem,3vh,2.5rem)]">
-        <p className="text-center font-serif text-lg font-light italic text-candle-muted/80">
-          Những dịp anh đã chuẩn bị cho em.
-        </p>
+      <motion.div
+        className="flex h-full w-full"
+        initial={{ x: "0%", y: "0%" }}
+        animate={trackControls}
+        style={{
+          width: isWide ? `${count * 100}%` : "100%",
+          height: isWide ? "100%" : `${count * 100}%`,
+          flexDirection: isWide ? "row" : "column",
+        }}
+      >
+        {events.map((event, slideIndex) => {
+          const isActive = slideIndex === index;
+          const Cover = coverFor(event);
 
-        <div
-          className="relative min-h-0 w-full max-h-[min(70vh,28rem)] flex-1 overflow-hidden"
-        >
-          <motion.div
-            className="flex"
-            initial={{ x: "0%", y: "0%" }}
-            animate={trackControls}
-            style={{
-              width: isWide ? `${count * 100}%` : "100%",
-              height: isWide ? "100%" : `${count * 100}%`,
-              flexDirection: isWide ? "row" : "column",
-            }}
-          >
-            {events.map((event, slideIndex) => {
-              const distance = slideIndex - index;
-              const isActive = distance === 0;
-              const isNeighbour = Math.abs(distance) === 1;
+          return (
+            <motion.div
+              key={event.id}
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`Sự kiện ${slideIndex + 1} trên ${count}: ${event.occasion}`}
+              aria-hidden={isActive ? undefined : true}
+              className="h-full shrink-0"
+              style={{
+                width: isWide ? `${100 / count}%` : "100%",
+                height: isWide ? "100%" : `${100 / count}%`,
+                pointerEvents: isActive ? "auto" : "none",
+              }}
+              drag={isWide ? "x" : "y"}
+              dragConstraints={
+                isWide
+                  ? { left: -180, right: 180, top: 0, bottom: 0 }
+                  : { left: 0, right: 0, top: -180, bottom: 180 }
+              }
+              dragElastic={0.2}
+              dragSnapToOrigin
+              onDragEnd={handleDragEnd}
+              onClick={handleSlideClick}
+            >
+              <Cover event={event} isActive={isActive} />
+            </motion.div>
+          );
+        })}
+      </motion.div>
 
-              return (
-                <motion.div
-                  key={event.id}
-                  role="group"
-                  aria-roledescription="slide"
-                  aria-label={`Sự kiện ${slideIndex + 1} trên ${count}: ${event.occasion}`}
-                  className="shrink-0"
-                  aria-hidden={isActive ? undefined : true}
-                  style={{
-                    width: isWide ? `${100 / count}%` : "100%",
-                    height: isWide ? "100%" : `${100 / count}%`,
-                    pointerEvents: isActive ? "auto" : "none",
-                  }}
-                  animate={{
-                    opacity: isActive ? 1 : isNeighbour ? 0.28 : 0,
-                    scale: isActive ? 1 : isNeighbour ? 0.9 : 0.85,
-                  }}
-                  transition={{
-                    duration: reducedMotion ? 0 : SLIDE_DURATION,
-                    ease: EASE,
-                  }}
-                  drag={isWide ? "x" : "y"}
-                  dragConstraints={
-                    isWide
-                      ? { left: -180, right: 180, top: 0, bottom: 0 }
-                      : { left: 0, right: 0, top: -180, bottom: 180 }
-                  }
-                  dragElastic={0.2}
-                  dragSnapToOrigin
-                  onDragEnd={handleDragEnd}
-                  onClick={handleSlideClick}
-                >
-                  <div
-                    className="mx-auto h-full w-full max-w-xl px-3 py-2"
-                    style={
-                      {
-                        ...(event.accent
-                          ? { "--event-accent": event.accent }
-                          : {}),
-                      } as CSSVars
-                    }
-                  >
-                    <EventCard event={event} isActive={isActive} />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
-
+      {/* Chrome đặt trên các slide, màu theo sự kiện đang hiện. */}
+      <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-3 px-4 pb-7">
         <div className="flex items-center gap-2 sm:gap-3">
           {count > 1 ? (
             <>
@@ -302,8 +278,8 @@ export default function EventCarousel({ events }: EventCarouselProps) {
                       aria-hidden="true"
                       className={`h-1.5 rounded-full transition-all duration-500 ${
                         isCurrent
-                          ? "w-6 bg-candle-gold"
-                          : "w-1.5 bg-candle-muted/40 hover:bg-candle-muted"
+                          ? "w-6 bg-event-accent"
+                          : "w-1.5 bg-event-muted hover:bg-event-accent"
                       }`}
                     />
                   </button>
@@ -321,7 +297,7 @@ export default function EventCarousel({ events }: EventCarouselProps) {
             onClick={togglePlay}
             aria-pressed={!isUserPaused}
             aria-label="Tự động chuyển sự kiện"
-            className="ml-1 flex h-11 w-11 items-center justify-center rounded-full border border-candle-muted/25 text-candle-muted transition-colors hover:border-candle-gold/60 hover:text-candle-gold focus-visible:border-candle-gold/70 sm:ml-2"
+            className="ml-1 flex h-11 w-11 items-center justify-center rounded-full border border-event-accent text-event-muted transition-colors hover:text-event-accent sm:ml-2"
           >
             {isUserPaused ? <PlayIcon /> : <PauseIcon />}
           </button>
@@ -333,11 +309,11 @@ export default function EventCarousel({ events }: EventCarouselProps) {
       {canAutoplay ? (
         <div
           aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 h-px bg-candle-muted/10"
+          className="absolute inset-x-0 bottom-0 z-20 h-px bg-event-muted/30"
         >
           <motion.div
             key={index}
-            className="h-full origin-left bg-candle-gold/60"
+            className="h-full origin-left bg-event-accent"
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
             transition={{ duration: cycleDelay / 1000, ease: "linear" }}
@@ -346,6 +322,17 @@ export default function EventCarousel({ events }: EventCarouselProps) {
       ) : null}
     </section>
   );
+}
+
+function themeVars(theme: EventTheme): CSSVars {
+  return {
+    "--event-base": theme.base,
+    "--event-surface": theme.surface,
+    "--event-ink": theme.ink,
+    "--event-muted": theme.muted,
+    "--event-accent": theme.accent,
+    "--event-accent-2": theme.accent2,
+  };
 }
 
 function NavButton({
@@ -362,22 +349,10 @@ function NavButton({
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="flex h-11 w-11 items-center justify-center rounded-full border border-candle-muted/25 text-candle-muted transition-colors hover:border-candle-gold/60 hover:text-candle-gold focus-visible:border-candle-gold/70"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-event-accent text-event-muted transition-colors hover:text-event-accent"
     >
       {children}
     </button>
-  );
-}
-
-function Backdrop() {
-  return (
-    <>
-      {/* Quiet background: a warm gradient wash plus a single soft
-        glow behind the text, like a lamp on a desk. Nothing here
-        competes with the words. */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-ink-900 via-ink-950 to-black" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-candle-gold/10 blur-[120px] animate-glow-pulse" />
-    </>
   );
 }
 

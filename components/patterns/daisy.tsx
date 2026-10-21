@@ -46,7 +46,7 @@ export default function DaisyField({
         const jitterX = (seeded(i, 1) - 0.5) * 0.5;
         const jitterY = (seeded(i, 2) - 0.5) * 0.5;
         const size = 100 + seeded(i, 3) * 24;
-        const delay = (i / count) * 7 + seeded(i, 4) * 0.6;
+        const delay = (i / count) * 5 + seeded(i, 4) * 0.5;
         const color = PETAL_COLORS[i % PETAL_COLORS.length];
 
         return (

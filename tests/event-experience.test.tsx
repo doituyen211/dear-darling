@@ -86,6 +86,7 @@ describe("EventExperience", () => {
       title: "Sắp tới",
       preview: "Sắp tới",
       status: "coming-soon" as const,
+      experience: "letter" as const,
       requiresPin: false,
       order: 99,
       published: false,

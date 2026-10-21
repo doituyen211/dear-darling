@@ -16,6 +16,7 @@ const makeEvent = (id: string, order: number): EventMeta => ({
   title: `Sự kiện ${id.toUpperCase()}`,
   preview: `Phần giới thiệu ngắn của ${id}.`,
   status: "ready",
+  experience: "letter",
   requiresPin: true,
   order,
   published: true,
