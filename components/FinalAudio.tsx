@@ -2,7 +2,17 @@
 
 import { motion } from "framer-motion";
 
-export default function FinalAudio() {
+interface FinalAudioProps {
+  /** Đường dẫn file ghi âm trong /public. */
+  src: string;
+  /** MIME type của file, để trình duyệt đoán đúng định dạng. */
+  type?: string;
+}
+
+export default function FinalAudio({
+  src,
+  type = "audio/mp4",
+}: FinalAudioProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -20,9 +30,9 @@ export default function FinalAudio() {
         className="w-full max-w-sm rounded-full"
         aria-label="A short recorded message"
       >
-        <source src="/audio/message.m4a" type="audio/mp4" />
+        <source src={src} type={type} />
         Your browser doesn&rsquo;t support the audio element. You can download
-        the recording from /audio/message.m4a instead.
+        the recording from {src} instead.
       </audio>
 
       <p className="font-sans text-sm text-candle-muted">

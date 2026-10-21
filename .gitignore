@@ -5,3 +5,6 @@ out
 npm-debug.log*
 .DS_Store
 next-env.d.ts
+.opencode
+coverage
+*.tsbuildinfo
