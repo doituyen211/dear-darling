@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import EventExperience from "@/components/EventExperience";
 import { getEventById } from "@/data/events";
+import { greeting } from "@/data/events/mua-20-10";
 import { EVENT_PIN_HASHES, sessionScopeFor } from "@/data/security";
 
 // Mã PIN thật. Cả hai sự kiện dùng chung mã này.
@@ -71,7 +72,7 @@ describe("EventExperience", () => {
 
     await waitFor(
       () => {
-        expect(screen.getByText("Chúc mừng 20/10 em")).toBeInTheDocument();
+        expect(screen.getByText(greeting.text)).toBeInTheDocument();
       },
       { timeout: 4000 },
     );
@@ -83,7 +84,7 @@ describe("EventExperience", () => {
     await typePin(LEGACY_PIN);
 
     await waitFor(() => {
-      expect(screen.getByText("Chúc mừng 20/10 em")).toBeInTheDocument();
+      expect(screen.getByText(greeting.text)).toBeInTheDocument();
     });
 
     expect(document.querySelector("audio")).toBeNull();

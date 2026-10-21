@@ -465,19 +465,49 @@ why the home page's JavaScript never contains the letter.
 ## 14. The Daisy Pattern
 
 The one pattern this site needed, and the one that carries the 20/10 identity.
+It has **two layers**: the field itself, and the petals drifting over it.
+
+### The field — 36 flowers, each opening petal by petal
 
 - **Five petals**, one warm yellow centre — a daisy, not a petal.
 - **Colours mixed like real flowers**: blue, red, purple, yellow, pink
   (`--flower-*`). The surrounding interface stays warm-neutral; the flowers are
   the one place saturated colour is allowed.
-- **Grows in and fills the screen**: a 6×6 grid, each flower blooming on a
-  staggered delay, so the field appears row by row over ~5s.
-- **Deterministic**: every position, size, delay and colour comes from
-  `seeded(index)` in `lib/random.ts`, so the server and the client render the
-  same DOM and never disagree during hydration.
-- **Bounded size**: `min(112%, 22vmin)` — the flowers grow with the screen but
+- **Opens one petal at a time.** Each of the five petals scales up from the
+  flower's centre, ~90ms apart, so a flower visibly *unfolds* instead of
+  popping into being. A gentle overshoot (`cubic-bezier(0.34, 1.56, 0.64, 1)`)
+  gives it the softness of something growing.
+- **The field fills from the top down**: a 6×6 grid, each flower 130ms after
+  the last, so the screen is covered in about 5.4 seconds.
+- **Then it stops.** The field does not sway forever. One opening, then
+  stillness.
+- **Bounded size**: `min(size, 22vmin)` — the flowers grow with the screen but
   never become absurd on a wide monitor.
-- **Reduced motion**: the whole field appears at once, no bloom.
+
+### The drifting layer — 12 loose petals
+
+Loose petals, not flowers, fall slowly through the scene: down, swaying
+sideways, turning, fading out at the bottom. They start already mid-fall (a
+negative delay), so the scene never looks like it is waiting to begin.
+
+### Two things worth knowing before you touch it
+
+**The pivot is the whole trick.** A petal has to collapse toward the *flower's*
+centre, not toward the middle of the ellipse that draws it. framer-motion
+computes `transform-origin` for SVG elements from the element's own bounding
+box, so the fix is to put `originX`/`originY` in the **`animate` target** —
+they are read from motion values, not from props — and framer-motion passes a
+string origin through untouched.
+
+**Round everything that reaches the DOM.** `Math.sin` differs between Node and
+the browser in about the 11th decimal place. That is enough for React to
+declare a hydration mismatch. `seeded()` in `lib/random.ts` rounds to four
+decimals for exactly this reason.
+
+### Reduced motion
+
+With `prefers-reduced-motion: reduce` the whole field appears at once, fully
+open, and the drifting petals are scattered and still. Nothing moves.
 
 This is the sanctioned exception to "don't use saturated accent colors" in
 Part I. Everything else in the interface stays warm-neutral.

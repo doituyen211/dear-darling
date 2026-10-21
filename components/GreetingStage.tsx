@@ -44,13 +44,15 @@ export default function GreetingStage({ event }: { event: EventMeta }) {
       {/* Lớp mờ phía sau chữ: hoa vẫn thấy rõ, nhưng dòng chúc đọc được. */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(closest-side,rgba(247,244,237,0.8),rgba(247,244,237,0.42),transparent)]" />
 
-      <div className="relative z-10 px-6 text-center">
+      <div className="relative z-10 max-w-2xl px-6 text-center">
         {missing ? (
           <p className="font-serif text-3xl font-light italic text-event-ink sm:text-4xl">
             Sự kiện này đang được chuẩn bị.
           </p>
         ) : greeting ? (
-          <p className="font-serif text-[clamp(1.75rem,8.5vw,4.5rem)] font-light italic leading-tight text-event-ink">
+          // Cỡ chữ co theo bề rộng màn hình để lời chúc dài vẫn đọc
+          // được, và vẫn giữ được nhịp "một câu giữa màn hình".
+          <p className="text-balance font-serif text-[clamp(1.5rem,5.5vw,3rem)] font-light italic leading-[1.35] text-event-ink">
             {greeting.text}
           </p>
         ) : null}

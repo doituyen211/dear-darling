@@ -3,19 +3,27 @@ import { describe, expect, it } from "vitest";
 
 import DaisyField from "@/components/patterns/daisy";
 import { events, type EventTheme } from "@/data/events";
+import { setMediaQuery } from "./setup";
 
 describe("DaisyField", () => {
   it("sinh đủ số bông hoa theo lưới", () => {
-    render(<DaisyField columns={6} rows={6} />);
+    const { container } = render(<DaisyField columns={6} rows={6} />);
 
-    expect(document.querySelectorAll(".daisy")).toHaveLength(36);
+    expect(container.querySelectorAll(".daisy-flower")).toHaveLength(36);
   });
 
-  it("mỗi bông có đúng 5 cánh", () => {
+  it("mỗi bông có đúng 5 cánh và 1 nhịp hoa", () => {
     const { container } = render(<DaisyField columns={1} rows={1} />);
 
-    expect(container.querySelectorAll("ellipse")).toHaveLength(5);
-    expect(container.querySelector("circle")).not.toBeNull();
+    const flower = container.querySelector(".daisy-flower")!;
+    expect(flower.querySelectorAll("ellipse")).toHaveLength(5);
+    expect(flower.querySelector("circle")).not.toBeNull();
+  });
+
+  it("có lớp cánh rơi lơ lửng phía trên", () => {
+    const { container } = render(<DaisyField />);
+
+    expect(container.querySelectorAll(".daisy-petals svg")).toHaveLength(12);
   });
 
   it("dựng ra y hệt nhau mỗi lần render (không lệch hydrate)", () => {
@@ -29,6 +37,19 @@ describe("DaisyField", () => {
     render(<DaisyField />);
 
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  });
+
+  it("khi giảm chuyển động thì hoa hiện ngay, không mở cánh", () => {
+    setMediaQuery("(prefers-reduced-motion: reduce)", true);
+    const { container } = render(<DaisyField columns={1} rows={1} />);
+
+    const flower = container.querySelector(".daisy-flower")!;
+    const petals = [...flower.querySelectorAll("ellipse")];
+
+    // Cánh không có transform nào → đã ở trạng thái mở sẵn.
+    petals.forEach((petal) => {
+      expect(petal.getAttribute("style") ?? "").not.toContain("scale");
+    });
   });
 });
 

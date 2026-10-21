@@ -45,9 +45,13 @@ Vietnamese user-facing copy.
 - `components/SplitText.tsx` — GSAP character reveal. **Frozen.**
 - `components/FinalAudio.tsx` — native `<audio controls>`. **Frozen.**
 - `components/patterns/daisy.tsx` — the five-petal daisy field.
+- `components/patterns/daisy.tsx` — the daisy field: 36 flowers + 12 drifting petals.
+- `components/patterns/daisy-flower.tsx` — one flower; its five petals open one by one.
+- `components/patterns/daisy-petals.tsx` — the layer of petals drifting over the field.
 - `components/hooks/useMediaQuery.ts` — `matchMedia` with cleanup.
 - `components/hooks/usePrefersReducedMotion.ts` — motion-aware, hydration-safe.
 - `components/hooks/useIsomorphicLayoutEffect.ts` — `useLayoutEffect` on the client only.
+- `lib/flower.ts` — the flower's layout data and its timing constants.
 - `data/events/index.ts` — registry of every occasion (**metadata only**), plus
   `EventTheme`, `LEGACY_THEME` and `themeFor()`.
 - `data/events/<id>.ts` — the content of one occasion (`body` or `greeting`).
@@ -55,8 +59,7 @@ Vietnamese user-facing copy.
 - `data/messages.ts` — the first letter's lines. **Frozen.**
 - `data/security.ts` — SHA-256 hashes of the PINs.
 - `lib/media.ts` — `WIDE_QUERY`, the single breakpoint used by CSS *and* JS.
-- `lib/random.ts` — `seeded()`, deterministic randomness for SSR-safe patterns.
-- `app/layout.tsx` — loads Fraunces + Instrument Sans via `next/font/google`.
+- `lib/random.ts` — `seeded()`, deterministic randomness for SSR-safe patterns.- `app/layout.tsx` — loads Fraunces + Instrument Sans via `next/font/google`.
 - `tailwind.config.ts` — Lovable palette tokens, the `wide` screen, `event-*` colors.
 
 ## Rules that are easy to break by accident
@@ -106,8 +109,16 @@ Vietnamese user-facing copy.
 - Reduced motion is only partly wired: `MessageSequence` shortens its timers via
   framer-motion's `useReducedMotion` and `globals.css` collapses CSS animations, but
   the GSAP reveal in `SplitText` is not motion-aware.
-- The first letter takes **~159 seconds** to play (0.1s per character stagger, and
+- **The first letter takes **~159 seconds** to play** (0.1s per character stagger, and
   one line is 382 characters). Never put the letter inside a rotating carousel.
+- **`seeded()` must stay rounded.** `Math.sin` differs between Node and the
+  browser around the 11th decimal place — enough for React to report a
+  hydration mismatch. `lib/random.ts` rounds to four decimals; anything
+  derived from it inherits that.
+- **A flower's petals pivot on `originX`/`originY` inside the `animate`
+  target**, not as props. framer-motion computes `transform-origin` for SVG
+  elements from the element's own bounding box, so without them a petal
+  collapses toward the middle of the ellipse instead of the flower's centre.
 
 ## Testing quirks
 

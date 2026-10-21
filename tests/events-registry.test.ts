@@ -11,6 +11,7 @@ import {
   type EventMeta,
 } from "@/data/events";
 import { hasEventContent, loadEventBody, loadGreeting } from "@/data/events/loaders";
+import { greeting as GREETING_20_10 } from "@/data/events/mua-20-10";
 
 const readSource = (relativePath: string) =>
   readFileSync(resolve(process.cwd(), relativePath), "utf8");
@@ -128,7 +129,8 @@ describe("event bodies", () => {
     const greeting = await loadGreeting("mua-20-10");
 
     expect(greeting).not.toBeNull();
-    expect(greeting!.text).toBe("Chúc mừng 20/10 em");
+    expect(greeting!.text).toBe(GREETING_20_10.text);
+    expect(greeting!.text.length).toBeGreaterThan(0);
   });
 
   it("returns null for an event without a body", async () => {

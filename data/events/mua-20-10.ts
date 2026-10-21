@@ -6,5 +6,5 @@ import type { GreetingBody } from "./index";
  * Người xem mở khoá và thấy một cảnh chúc giữa màn hình, có hoa.
  */
 export const greeting: GreetingBody = {
-  text: "Chúc mừng 20/10 em",
+  text: "Chúc em 20/10 thật nhiều niềm vui, luôn xinh đẹp và hạnh phúc! Mong là những ngày tiếp theo của em đều có nụ cười...",
 };

@@ -55,38 +55,9 @@ body {
   box-shadow: var(--focus-shadow);
 }
 
-/* Một bông hoa cúc 5 cánh: mọc ra từ từ từ giữa, xoay nhẹ rồi đứng yên.
-   `animation-delay` do từng bông tự đặt, nên cả màn hình được phủ dần. */
-.daisy {
-  opacity: 0;
-  transform: scale(0) rotate(-24deg);
-  animation-name: daisy-bloom;
-  animation-duration: 1.3s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  animation-fill-mode: both;
-  will-change: transform, opacity;
-}
-
-@keyframes daisy-bloom {
-  from {
-    opacity: 0;
-    transform: scale(0) rotate(-24deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
-}
-
-/* Khi người dùng yêu cầu giảm chuyển động, cả màn hình hoa hiện ra
-   ngay, không mọc dần. */
-@media (prefers-reduced-motion: reduce) {
-  .daisy {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-}
+/* Hoa cúc giờ chuyển động bằng framer-motion (components/patterns/daisy.tsx),
+   nên không còn rule CSS nào cho `.daisy` ở đây. Việc tôn trọng
+   `prefers-reduced-motion` do hook `usePrefersReducedMotion` lo. */
 
 /* Keep a visible, deliberate focus ring everywhere — this page has very
    few interactive elements, so the ones that exist must be unmistakable. */
