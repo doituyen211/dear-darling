@@ -1,15 +1,15 @@
 # AGENTS.md
 
-Personal site for celebration letters: a public carousel of occasions on `/`, and
-a PIN-protected letter + recording per occasion at `/e/<id>`. Vietnamese
-user-facing copy, English code comments.
+Personal site for celebration letters: a public full-screen carousel of
+occasions on `/`, and a PIN-protected experience per occasion at `/e/<id>`.
+Vietnamese user-facing copy.
 
 ## Setup & commands
 
 - `npm install` first — `node_modules` is gitignored and is usually absent.
 - `npm run dev` → http://localhost:3000. `npm run build` / `npm run start` for production.
-- `npm test` (Vitest), `npm run typecheck` (`tsc --noEmit`).
-- **No test-free repo, no formatter, no CI, no ESLint config.**
+- `npm test` (Vitest + React Testing Library), `npm run typecheck` (`tsc --noEmit`).
+- **No formatter, no CI, no ESLint config.**
   - `npm run build` also typechecks, so it is the real verification gate.
   - `npm run lint` runs `next lint`, which needs ESLint — it is not installed and
     there is no config, so it drops into an interactive "How would you like to
@@ -17,51 +17,67 @@ user-facing copy, English code comments.
 - `npm run typecheck` writes `tsconfig.tsbuildinfo`; it is gitignored, but delete
   it anyway if you see it in `git status`.
 - **Don't run `next build` while `next dev` is running** — they share `.next` and
-  the dev server ends up with `Cannot find module './vendor-chunks/...'`. Stop the
-  dev server, or delete `.next` and restart it.
+  the dev server ends up with `Cannot find module './vendor-chunks/...'` or
+  `Next.js build worker exited with code: 3221226505`. Stop the dev server
+  first, then build. If the dev server serves stale CSS after a change, kill the
+  `next` processes by PID and restart it — deleting `.next` alone is not enough.
 - Motion and pacing can only be judged in a browser. After a change, `npm run build`
   then open `/` and watch the reveal.
 
 ## Architecture — two layers, deliberately separate
 
 ```
-/                      browse layer   PUBLIC. Metadata only, no letter text.
-/e/<eventId>           detail layer   PIN gate → letter → recording.
+/                    browse layer   PUBLIC. One occasion per screen, metadata only.
+/e/<eventId>         detail layer   PIN gate → that occasion's experience.
 ```
 
 - `app/page.tsx` — server component. Renders `<EventCarousel events={publishedEvents} />`.
 - `app/e/[eventId]/page.tsx` — server component. `generateStaticParams`, `notFound()`
-  for unknown ids, resolves the per-event PIN hash, renders `<EventExperience>`.
-- `components/EventCarousel.tsx` — the slider: axis, autoplay, drag, dots, play/pause.
-- `components/EventCard.tsx` — one card. Metadata only; links to `/e/<id>`.
-- `components/EventExperience.tsx` — the detail layer: `PinGate` → `EventStages`
-  → `MessageSequence` → `FinalAudio`.
+  for unknown ids, resolves the per-occasion PIN hash, renders `<EventExperience>`.
+- `components/EventCarousel.tsx` — the slider: axis, autoplay, swipe, dots, play/pause.
+- `components/event-covers/index.tsx` — **the cover registry**: `covers[id]` → component.
+- `components/event-covers/<id>.tsx` — one full-screen composition per occasion.
+- `components/EventExperience.tsx` — the detail layer. Routes on `event.experience`:
+  `letter` → `EventStages` (frozen), `greeting` → `GreetingStage`.
+- `components/GreetingStage.tsx` — the greeting experience: flowers + one centred line.
 - `components/PinGate.tsx` — 6-digit PIN gate. Optional `pinHash` / `sessionScope` props.
-- `components/MessageSequence.tsx` — plays `lines` one at a time. **Do not modify.**
-- `components/SplitText.tsx` — GSAP character reveal. **Do not modify.**
-- `components/FinalAudio.tsx` — native `<audio controls>`, optional `src` / `type`.
-- `data/events/index.ts` — registry of **safe metadata** for every occasion.
-- `data/events/<id>.ts` — the letter body of one occasion.
-- `data/events/loaders.ts` — `import()` map, one lazy chunk per occasion.
-- `data/messages.ts` — the first letter's lines. Untouched; wrapped by
-  `data/events/thu-dau.ts`.
+- `components/MessageSequence.tsx` — plays `lines` one at a time. **Frozen.**
+- `components/SplitText.tsx` — GSAP character reveal. **Frozen.**
+- `components/FinalAudio.tsx` — native `<audio controls>`. **Frozen.**
+- `components/patterns/daisy.tsx` — the five-petal daisy field.
+- `components/hooks/useMediaQuery.ts` — `matchMedia` with cleanup.
+- `components/hooks/usePrefersReducedMotion.ts` — motion-aware, hydration-safe.
+- `components/hooks/useIsomorphicLayoutEffect.ts` — `useLayoutEffect` on the client only.
+- `data/events/index.ts` — registry of every occasion (**metadata only**), plus
+  `EventTheme`, `LEGACY_THEME` and `themeFor()`.
+- `data/events/<id>.ts` — the content of one occasion (`body` or `greeting`).
+- `data/events/loaders.ts` — two dynamic-`import()` maps, one lazy chunk per occasion.
+- `data/messages.ts` — the first letter's lines. **Frozen.**
 - `data/security.ts` — SHA-256 hashes of the PINs.
 - `lib/media.ts` — `WIDE_QUERY`, the single breakpoint used by CSS *and* JS.
+- `lib/random.ts` — `seeded()`, deterministic randomness for SSR-safe patterns.
 - `app/layout.tsx` — loads Fraunces + Instrument Sans via `next/font/google`.
-- `tailwind.config.ts` — palette tokens `ink-*` / `candle-*`, plus the `wide` screen.
+- `tailwind.config.ts` — Lovable palette tokens, the `wide` screen, `event-*` colors.
 
 ## Rules that are easy to break by accident
 
-- **The carousel must never contain or import the letter content.** `data/events/index.ts`
-  must not import `data/events/<id>.ts`, `data/events/loaders.ts`, or `data/messages.ts`.
-  `tests/events-registry.test.ts` enforces this, and also that no `preview` string
-  contains any line of the letter.
+- **The registry and the covers must never contain or import the letter content.**
+  `data/events/index.ts` must not import `data/events/<id>.ts`,
+  `data/events/loaders.ts`, or `data/messages.ts`, and a cover must not import a
+  content module either. `tests/events-registry.test.ts` enforces the first one,
+  and also that no `preview` string contains any line of the letter.
 - **The carousel must never mount `MessageSequence` / `SplitText`.** `SplitText` uses
   GSAP `ScrollTrigger`, whose trigger position is computed from the element's rect —
   inside a slide that is translated off-screen it never fires, so the letter hangs
   forever. The letter only exists on `/e/<id>`, where the page does not scroll.
 - **The carousel must never touch authorization.** It does not import `PinGate` or
-  `data/security.ts`. Autoplay / swiping / selecting an event can never grant access.
+  `data/security.ts`. Autoplay / swiping / selecting an occasion can never grant access.
+- **`thu-dau` is frozen.** The first occasion's experience — `MessageSequence`,
+  `SplitText`, `FinalAudio`, `data/messages.ts` — must not change. `git diff`
+  against `main` for those paths has to stay empty. It also does **not** declare a
+  `theme`, so it keeps the legacy dark palette.
+- **Themes are opt-in.** An occasion without `EventMeta.theme` uses `LEGACY_THEME`
+  (the exact old colours) and must not be wrapped in a theme wrapper.
 - **`prefers-reduced-motion`**: use `components/hooks/usePrefersReducedMotion.ts`, not
   framer-motion's `useReducedMotion`. The framer-motion hook returns `null` on the
   server but the real value on the client, which breaks hydration.
@@ -80,7 +96,7 @@ user-facing copy, English code comments.
   visitor can read it. True confidentiality would need a server-side gate.
 - **"Remember me" is currently dead code.** `PinGate` writes `sessionStorage` on
   success but the read block in the mount effect is commented out, so a reload
-  re-locks. The write is per-event (`letter-unlocked:<id>`), except the first
+  re-locks. The write is per-occasion (`letter-unlocked:<id>`), except the first
   occasion, which keeps the original `letter-unlocked` key.
 - `gsap` is pinned `^3.15.0` under the free "no charge" license, so `gsap/SplitText`
   ships in the public package. No Club plugin install needed, and none is missing.
@@ -110,7 +126,9 @@ user-facing copy, English code comments.
 
 ## Conventions
 
-- Vietnamese for user-facing strings, English for code comments. Keep it that way.
+- Vietnamese for user-facing strings. **Code comments are mixed in this repo** —
+  several original files use Vietnamese comments, others English. Match the file
+  you are editing rather than converting it.
 - Use the `@/` import alias (`@/*` → repo root): `@/components/...`, `@/data/...`.
 - Tailwind classes only; no CSS modules. Palette comes from `tailwind.config.ts`.
 - No Prettier or ESLint config — match the surrounding style (2-space indent, double
@@ -119,11 +137,14 @@ user-facing copy, English code comments.
 
 ## Adding an occasion
 
-1. `data/events/<id>.ts` — export `body: EventBody` (`lines`, optional `audio`).
-2. `data/events/index.ts` — add an `EventMeta` entry (`id`, `occasion`, `title`,
-   `date`, `preview`, `order`, `published`).
-3. `data/events/loaders.ts` — add the `import()` line.
-4. `data/security.ts` — add the PIN hash to `EVENT_PIN_HASHES` (omit it to reuse
-   the default gate).
+1. `data/events/<id>.ts` — a letter (`export const body: EventBody`) or a greeting
+   (`export const greeting: GreetingBody`).
+2. `components/event-covers/<id>.tsx` — its full-screen composition, registered in
+   `components/event-covers/index.tsx`.
+3. `data/events/index.ts` — an `EventMeta` entry (`id`, `occasion`, `title`, `date`,
+   `preview`, `experience`, `order`, `published`, optional `theme`).
+4. `data/events/loaders.ts` — one line in the matching import map.
+5. `data/security.ts` — add the PIN hash to `EVENT_PIN_HASHES`.
 
 The `preview` is shown before authentication — it must not quote the letter.
+`DESIGN.md` has the full recipe and the design rules.

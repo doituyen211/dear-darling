@@ -1,5 +1,14 @@
 # Design System Inspired by Lovable
 
+> **Cấu trúc tài liệu**
+>
+> - **Phần I** (mục 1–9) là hệ thiết kế nền tảng, lấy cảm hứng từ Lovable. Áp dụng cho **mọi phần mới** của site này.
+> - **Phần II** (mục 10–19) là lớp mở rộng riêng cho site này: mỗi dịp là một thế giới riêng, và sự kiện đầu tiên (`thu-dau`) được **đóng băng** — không đổi một dòng nào.
+>
+> **Ngoại lệ đã biết:** mục 3 chốt font *Camera Plain Variable*. Site này dùng **Fraunces** (serif, cho mọi câu chữ) + **Instrument Sans** (cho chữ nhỏ) — font đã có sẵn trong dự án, không cài thêm. Các nguyên tắc còn lại của hệ thiết kế giữ nguyên.
+
+---
+
 ## 1. Visual Theme & Atmosphere
 
 Lovable's website radiates warmth through restraint. The entire page sits on a creamy, parchment-toned background (`#f7f4ed`) that immediately separates it from the cold-white conventions of most developer tool sites. This isn't minimalism for minimalism's sake — it's a deliberate choice to feel approachable, almost analog, like a well-crafted notebook. The near-black text (`#1c1c1c`) against this warm cream creates a contrast ratio that's easy on the eyes while maintaining sharp readability.
@@ -160,7 +169,7 @@ What makes Lovable's visual system distinctive is its opacity-driven depth model
 - Warm, inviting input area — not clinical
 
 **Template Gallery**
-- Card grid showing project templates
+- Card grid showing template thumbnails
 - Each card: image + title, `1px solid #eceae4` border, 12px radius
 - Hover: subtle shadow or border darkening
 - Category labels as text links
@@ -168,7 +177,7 @@ What makes Lovable's visual system distinctive is its opacity-driven depth model
 **Stats Bar**
 - Large metrics: "0M+" pattern in 48px+ weight 600
 - Descriptive text below in muted gray
-- Horizontal layout with generous spacing
+- Horizontal layout with 32px gap
 
 ## 5. Layout Principles
 
@@ -283,7 +292,7 @@ What makes Lovable's visual system distinctive is its opacity-driven depth model
 
 ### Example Component Prompts
 - "Create a hero section on cream background (#f7f4ed). Headline at 60px Camera Plain Variable weight 600, line-height 1.10, letter-spacing -1.5px, color #1c1c1c. Subtitle at 18px weight 400, line-height 1.38, color #5f5f5d. Dark CTA button (#1c1c1c bg, #fcfbf8 text, 6px radius, 8px 16px padding, inset shadow) and ghost button (transparent bg, 1px solid rgba(28,28,28,0.4) border, 6px radius)."
-- "Design a card on cream (#f7f4ed) background. Border: 1px solid #eceae4. Radius 12px. No box-shadow. Title at 20px Camera Plain Variable weight 400, line-height 1.25, color #1c1c1c. Body at 14px weight 400, color #5f5f5d."
+- "Design a card on cream (#f7f4ed) background. Border: 1px solid #eceae4. Radius: 12px. No box-shadow. Title at 20px Camera Plain Variable weight 400, line-height 1.25, color #1c1c1c. Body at 14px weight 400, color #5f5f5d."
 - "Build a template gallery: grid of cards with 12px radius, 1px solid #eceae4 border, cream backgrounds. Each card: image with 12px top radius, title below. Hover: subtle border darkening."
 - "Create navigation: sticky on cream (#f7f4ed). Camera Plain 16px weight 400 for links, #1c1c1c text. Dark CTA button right-aligned with inset shadow. Mobile: hamburger menu with 6px radius."
 - "Design a stats section: large numbers at 48px Camera Plain weight 600, letter-spacing -1.2px, #1c1c1c. Labels below at 16px weight 400, #5f5f5d. Horizontal layout with 32px gap."
@@ -296,3 +305,254 @@ What makes Lovable's visual system distinctive is its opacity-driven depth model
 5. Two weights: 400 (everything except headings) and 600 (headings)
 6. The inset shadow on dark buttons is the signature detail — don't skip it
 7. Camera Plain Variable at weight 480 is for special display moments only
+
+---
+---
+
+# Part II — The Extension Layer for This Site
+
+The Lovable system above is the **shared foundation**. Part II is what makes each
+occasion on this site look and feel like its own thing — without forking the
+foundation, and without letting one occasion's changes leak into another.
+
+## 10. Why an Extension Layer Exists
+
+This is a personal site with **several occasions**, not one page. Two hard
+requirements shape the whole layer:
+
+1. **Each occasion must look different.** Two identical cards side by side read
+   as a dashboard, not as a gift. The user explicitly rejected that.
+2. **The first occasion is frozen.** `thu-dau` — the original letter and its
+   recording — must keep its exact colors and its exact code. It is the one the
+   recipient already knows.
+
+So the layer has exactly two moving parts, and both are **opt-in**:
+
+| Opt-in | Meaning | `thu-dau` |
+|---|---|---|
+| `EventMeta.theme` | The occasion gets its own color world | **no** → keeps the legacy dark world |
+| `components/event-covers/<id>.tsx` | The occasion gets its own full-screen composition | **new file** (it never had one) |
+
+An occasion that opts into neither falls back to `LEGACY_THEME` and the
+`FallbackCover`. Nothing about the foundation changes for it.
+
+## 11. Per-Occasion Theme (opt-in)
+
+### The shape
+
+```ts
+export interface EventTheme {
+  base: string;      // page background
+  surface: string;   // secondary surfaces
+  ink: string;       // primary text
+  muted: string;     // secondary text
+  accent: string;    // primary accent
+  accent2: string;   // secondary accent
+  pattern: "petal" | "contour" | "dots" | "none";
+}
+```
+
+### How it reaches the DOM
+
+The theme is written to CSS custom properties, and Tailwind reads them:
+
+```css
+--event-base, --event-surface, --event-ink,
+--event-muted, --event-accent, --event-accent-2
+```
+
+```ts
+// tailwind.config.ts
+colors: {
+  event: {
+    base: "var(--event-base)",
+    surface: "var(--event-surface)",
+    ink: "var(--event-ink)",
+    muted: "var(--event-muted)",
+    accent: "var(--event-accent)",
+    "accent-2": "var(--event-accent-2)",
+  },
+}
+```
+
+So a themed component writes `bg-event-base text-event-ink` and inherits the
+occasion's colors with no per-occasion class names and no runtime branching.
+
+### Where the variables are set
+
+- **Carousel** — on the `<section>`, from the *active* occasion's theme. The
+  chrome (dots, arrows, pause, progress) recolors as the carousel moves.
+- **Greeting stage** — on its own `<main>`, from its occasion's theme.
+- **Letter stage** — nothing. It hardcodes the legacy classes and is frozen.
+
+### `LEGACY_THEME`
+
+`thu-dau` does not declare a `theme`. `themeFor(event)` returns `LEGACY_THEME`,
+which is **the exact old palette**:
+
+| Token | Value | Old class |
+|---|---|---|
+| base | `#0c0f1a` | `ink-950` |
+| surface | `#12172a` | `ink-900` |
+| ink | `#f4ead9` | `candle-light` |
+| muted | `#8b93ac` | `candle-muted` |
+| accent | `#c9a876` | `candle-gold` |
+
+That is what lets the carousel chrome sit correctly on the dark slide without
+the frozen letter stage ever reading a variable.
+
+## 12. Cover per Occasion
+
+The home page is a full-screen carousel: **one occasion per screen**, no cards,
+no rounded boxes.
+
+```
+components/event-covers/
+  types.ts        EventCoverProps { event, isActive }
+  thu-dau.tsx     the dark "letter title page"
+  mua-20-10.tsx   the daisy field
+  index.tsx       the covers map + FallbackCover
+```
+
+### Rules for a cover
+
+- A cover receives **public metadata only** — `EventMeta`. It never imports an
+  event's content module.
+- A cover fills its slide completely (`h-full w-full`). It is a composition,
+  not a container.
+- A cover is a **composition, not a template**: `thu-dau` is a single centred
+  line on a dark lamplight glow; `mua-20-10` is a full screen of flowers. They
+  share no layout code, and that is the point.
+- The whole cover is the link to `/e/<id>`. Inactive covers get
+  `tabIndex={-1}` and live inside an `aria-hidden` slide.
+
+### Adding a cover
+
+1. Create `components/event-covers/<id>.tsx`.
+2. Register it in `components/event-covers/index.tsx`.
+
+A published occasion with no cover falls back to `FallbackCover`, and
+`tests/events-registry.test.ts` fails if a published occasion has none.
+
+## 13. Two Kinds of Experience
+
+`EventMeta.experience` decides what the visitor sees after the PIN gate.
+
+| | `letter` | `greeting` |
+|---|---|---|
+| Used by | `thu-dau` | `mua-20-10` |
+| Stage component | `EventStages` (frozen) | `GreetingStage` |
+| Content | `body.lines` + `body.audio` | `greeting.text` |
+| Shape | lines appear one at a time, then a recording | one centred line on a field of flowers |
+| Audio | yes | **no** |
+
+### Why two loaders
+
+`data/events/loaders.ts` keeps **two separate dynamic-import maps** — one for
+letters, one for greetings — so `loadEventBody(id)` keeps its exact signature
+and the frozen `EventStages` needs no change at all.
+
+```ts
+loadEventBody(id)   // → EventBody | null   (letters)
+loadGreeting(id)    // → GreetingBody | null (greetings)
+hasEventContent(id) // → either
+```
+
+Both use static `import()` paths, so the bundler emits **one lazy chunk per
+occasion**. That chunk is only fetched **after the PIN gate opens**, which is
+why the home page's JavaScript never contains the letter.
+
+## 14. The Daisy Pattern
+
+The one pattern this site needed, and the one that carries the 20/10 identity.
+
+- **Five petals**, one warm yellow centre — a daisy, not a petal.
+- **Colours mixed like real flowers**: blue, red, purple, yellow, pink
+  (`--flower-*`). The surrounding interface stays warm-neutral; the flowers are
+  the one place saturated colour is allowed.
+- **Grows in and fills the screen**: a 6×6 grid, each flower blooming on a
+  staggered delay, so the field appears row by row over ~5s.
+- **Deterministic**: every position, size, delay and colour comes from
+  `seeded(index)` in `lib/random.ts`, so the server and the client render the
+  same DOM and never disagree during hydration.
+- **Bounded size**: `min(112%, 22vmin)` — the flowers grow with the screen but
+  never become absurd on a wide monitor.
+- **Reduced motion**: the whole field appears at once, no bloom.
+
+This is the sanctioned exception to "don't use saturated accent colors" in
+Part I. Everything else in the interface stays warm-neutral.
+
+## 15. The Frozen Parts
+
+These files must not change. The first occasion's experience is a promise, not
+a preference.
+
+| File | Why it is frozen |
+|---|---|
+| `components/MessageSequence.tsx` | The letter's pacing |
+| `components/SplitText.tsx` | The GSAP character reveal |
+| `components/FinalAudio.tsx` | The recording player |
+| `data/messages.ts` | The letter's text |
+| `components/PinGate.tsx` | The PIN logic — only *optional* props were added |
+| `components/EventExperience.tsx` → `EventStages` | The letter's composition |
+
+`git diff` against `main` for these paths must stay empty.
+
+## 16. Motion & Pacing
+
+| Thing | Value |
+|---|---|
+| Autoplay interval | 6.5s |
+| Delay before the first advance | 9s |
+| Slide transition | 0.6s, `cubic-bezier(0.22, 1, 0.36, 1)` |
+| Axis flip | **snaps** — never animates diagonally |
+| Daisy bloom | ~5s to fill the screen, once, on mount |
+| Letter reveal | 0.1s per character (unchanged) |
+
+**One autoplay timer.** A single `setTimeout` re-armed by an effect keyed on
+`[canAutoplay, index, count, cycleDelay]`. Never `setInterval` — manual
+navigation has to reset the countdown, and two live timers fight each other.
+
+Autoplay pauses when the visitor hovers or focuses the carousel, when the tab
+is hidden, and when the system asks for reduced motion. It stops at the last
+occasion instead of looping; the arrows still wrap around.
+
+## 17. Accessibility
+
+- The carousel is `role="region"` + `aria-roledescription="carousel"`.
+- Each slide is `role="group"` + `aria-roledescription="slide"` with a label
+  like "Sự kiện 2 trên 2: Mùa 20/10".
+- The active slide is exposed; inactive slides are `aria-hidden` and their
+  links get `tabIndex={-1}`, so they are out of the tab order.
+- The live region announces only **manual** navigation. Autoplay never talks.
+- There is always a visible play/pause control (WCAG 2.2.2).
+- Focus is never moved automatically on a slide change.
+- `prefers-reduced-motion` stops autoplay and makes transitions instant.
+- Touch targets: arrows and play/pause are 44×44; dots are 32×44.
+
+## 18. The Anti-Slop Checklist
+
+Run this before calling any occasion done.
+
+- [ ] Is there **exactly one** bold thing? If the whole screen is decorated, nothing is.
+- [ ] If I remove one element, is anything lost? If not, remove it.
+- [ ] No empty rounded card standing in for a composition.
+- [ ] No all-caps eyebrow, no `·`-joined meta strings, no `→` on every action.
+- [ ] Every pattern serves a composition — none is wallpaper.
+- [ ] The occasion is distinguishable from the other one at a glance.
+- [ ] The frozen files are untouched (`git diff` is empty).
+- [ ] The occasion's content never appears in the home page's bundle.
+
+## 19. Adding an Occasion
+
+1. **Content** — `data/events/<id>.ts`:
+   - a letter: `export const body: EventBody = { lines, audio }`
+   - a greeting: `export const greeting: GreetingBody = { text }`
+2. **Cover** — `components/event-covers/<id>.tsx`, and register it in
+   `components/event-covers/index.tsx`.
+3. **Registry** — an `EventMeta` entry in `data/events/index.ts`: `id`,
+   `occasion`, `title`, `date`, `preview`, `experience`, `order`, `published`,
+   and optionally a `theme`.
+4. **Loader** — one line in the matching map in `data/events/loaders.ts`.
+5. **PIN** — a hash in `data/security.ts` under `EVENT_PIN_HASHES`.
+6. **Tests** — `npm test`; the registry guards will tell you what you missed.
