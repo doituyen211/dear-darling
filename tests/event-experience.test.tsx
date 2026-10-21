@@ -71,12 +71,22 @@ describe("EventExperience", () => {
 
     await waitFor(
       () => {
-        expect(
-          screen.getByLabelText("Hôm nay là ngày của những người con gái."),
-        ).toBeInTheDocument();
+        expect(screen.getByText("Chúc mừng 20/10 em")).toBeInTheDocument();
       },
       { timeout: 4000 },
     );
+  });
+
+  it("sự kiện 20/10 không hiện phần ghi âm", async () => {
+    renderEvent("mua-20-10");
+
+    await typePin(LEGACY_PIN);
+
+    await waitFor(() => {
+      expect(screen.getByText("Chúc mừng 20/10 em")).toBeInTheDocument();
+    });
+
+    expect(document.querySelector("audio")).toBeNull();
   });
 
   it("báo sự kiện đang chuẩn bị khi chưa có nội dung", async () => {

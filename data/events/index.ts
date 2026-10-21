@@ -94,6 +94,17 @@ export interface EventBody {
   audio?: { src: string; type: string };
 }
 
+/**
+ * Nội dung của một sự kiện dạng lời chúc — chỉ một dòng, không có thư.
+ *
+ * Dành cho sự kiện như 20/10: người xem mở ra và thấy một cảnh chúc,
+ * không phải một bức thư.
+ */
+export interface GreetingBody {
+  /** Dòng chúc, đặt giữa màn hình. */
+  text: string;
+}
+
 export const events: EventMeta[] = [
   {
     id: "mua-20-10",

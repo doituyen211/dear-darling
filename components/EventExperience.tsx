@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import PinGate from "@/components/PinGate";
 import MessageSequence from "@/components/MessageSequence";
 import FinalAudio from "@/components/FinalAudio";
+import GreetingStage from "@/components/GreetingStage";
 import { loadEventBody } from "@/data/events/loaders";
 import type { EventBody, EventMeta } from "@/data/events";
 
@@ -20,12 +21,15 @@ interface EventExperienceProps {
 }
 
 /**
- * Trải nghiệm đầy đủ của một sự kiện: màn hình nhập mã, rồi thư hiện
- * từng dòng, rồi tới phần ghi âm.
+ * Trải nghiệm đầy đủ của một sự kiện: màn hình nhập mã, rồi phần nội
+ * dung của sự kiện.
  *
- * `EventStages` chỉ được mount SAU khi PinGate đã mở khoá, nên nội dung
- * thư của sự kiện chỉ được tải về (dynamic import) sau khi người xem đã
- * gõ đúng mã.
+ * Phần nội dung chỉ được mount SAU khi PinGate đã mở khoá, nên nội dung
+ * của sự kiện chỉ được tải về (dynamic import) sau khi người xem đã gõ
+ * đúng mã.
+ *
+ * Sự kiện dạng thư đi qua `EventStages`; sự kiện dạng lời chúc đi qua
+ * `GreetingStage`.
  */
 export default function EventExperience({
   event,
@@ -34,7 +38,11 @@ export default function EventExperience({
 }: EventExperienceProps) {
   return (
     <PinGate pinHash={pinHash} sessionScope={sessionScope}>
-      <EventStages eventId={event.id} />
+      {event.experience === "greeting" ? (
+        <GreetingStage event={event} />
+      ) : (
+        <EventStages eventId={event.id} />
+      )}
     </PinGate>
   );
 }

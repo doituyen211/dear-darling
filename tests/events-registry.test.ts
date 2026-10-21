@@ -10,7 +10,7 @@ import {
   publishedEvents,
   type EventMeta,
 } from "@/data/events";
-import { hasEventBody, loadEventBody } from "@/data/events/loaders";
+import { hasEventContent, loadEventBody, loadGreeting } from "@/data/events/loaders";
 
 const readSource = (relativePath: string) =>
   readFileSync(resolve(process.cwd(), relativePath), "utf8");
@@ -38,9 +38,9 @@ describe("event registry", () => {
     );
   });
 
-  it("has a body loader for every published event", () => {
+  it("has content for every published event", () => {
     publishedEvents.forEach((event) => {
-      expect(hasEventBody(event.id)).toBe(true);
+      expect(hasEventContent(event.id)).toBe(true);
     });
   });
 
@@ -124,14 +124,23 @@ describe("event bodies", () => {
     });
   });
 
-  it("returns null for an event without a body", async () => {
-    expect(await loadEventBody("khong-ton-tai")).toBeNull();
+  it("loads the 20/10 greeting", async () => {
+    const greeting = await loadGreeting("mua-20-10");
+
+    expect(greeting).not.toBeNull();
+    expect(greeting!.text).toBe("Chúc mừng 20/10 em");
   });
 
-  it("gives every published event at least one line to read", async () => {
+  it("returns null for an event without a body", async () => {
+    expect(await loadEventBody("khong-ton-tai")).toBeNull();
+    expect(await loadGreeting("khong-ton-tai")).toBeNull();
+  });
+
+  it("gives every published event some content to show", async () => {
     for (const event of publishedEvents) {
-      const body = await loadEventBody(event.id);
-      expect(body!.lines.length).toBeGreaterThan(0);
+      const letter = await loadEventBody(event.id);
+      const greeting = await loadGreeting(event.id);
+      expect(letter !== null || greeting !== null).toBe(true);
     }
   });
 });
